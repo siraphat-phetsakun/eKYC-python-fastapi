@@ -1,0 +1,84 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eKYC</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='/ai-style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Fruktur&family=Griffy&family=Indie+Flower&family=Lobster&display=swap" rel="stylesheet">
+
+</head>
+<body class='web'>
+
+    <video autoplay muted loop id="myVideo" class='vdo'>
+        <source src="{{ url_for('static', path='/videoplayback.mp4') }}" type="video/mp4">
+    </video>
+
+    <div class='body'>
+        <h1 class='header'>eKYC</h1><br></br>
+        <div class="web-body">
+
+            <div class='show'>
+                <video class='camera' id="video" autoplay></video>
+            </div>
+
+            <div class='menu'>
+                <div class='result-menu'>   
+                    <p class='result-header'>Result</p>
+                    <p class='nameresult' id="name">Name : </p>
+                    <p class='compareresult' id="compare">Compare : </p>
+
+                </div>
+                <button class='capture' type="submit" value="submit">Capture</button>
+                <a class="Register-button" href="/upload" role="button">Upload</a>
+            </div>
+        </div>      
+    </div>
+    <script>
+        var websocket = new WebSocket("ws:127.0.0.1:8000/websocket")
+        var imageCapture
+	    let video = document.querySelector("#video");
+	    let faceBack = document.querySelector("#faceBack");
+
+        websocket.onopen = () => {
+            console.log('Connection opened!')
+        }
+	
+	    websocket.onmessage = (event) => {
+            resp = event.data;
+            console.log(resp);
+            let obj = JSON.parse(resp);
+            name = obj.name;
+            compare = obj.compare;
+            if (obj.name != undefined){
+                document.querySelector('#name').innerText = "Name : " + name;
+            }
+            if(obj.compare != undefined){
+                document.getElementById('compare').innerHTML = "Compare : " + compare;
+            }
+             
+	    };
+        
+	    if(navigator.mediaDevices.getUserMedia || navigator.mediaDevices){
+    		navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+        	const track = stream.getVideoTracks()[0];
+		        imageCapture = new ImageCapture(track);
+		        video.srcObject = stream;
+        	    video.play();
+    		});
+    	}
+        
+
+        function capture() {
+            console.log('capture')
+            imageCapture.takePhoto().then((blob) => {
+                websocket.send(blob)
+            })
+        }
+        setInterval(capture, 1000)
+    </script>
+</body>
+</html>

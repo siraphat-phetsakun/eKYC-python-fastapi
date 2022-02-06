@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index page</title>
+</head>
+
+<body>
+    <h1>Index</h1>
+    <video id="video" autoplay></video>
+    <img src="" id="faceBack">
+    <button onclick="capture()">Capture</button>
+    <script>
+        var websocket = new WebSocket("ws:127.0.0.1:8000/websocket")
+        var imageCapture
+	let video = document.querySelector("#video");
+	let faceBack = document.querySelector("#faceBack");
+
+        websocket.onopen = () => {
+            console.log('Connection opened!')
+        }
+	
+	websocket.onmessage = (event) => {
+
+    		const arrayBuffer = event.data;
+
+    		faceBack.src = "data:image/png;base64," + arrayBuffer;
+		console.log(arrayBuffer);
+	};
+	
+	if(navigator.mediaDevices.getUserMedia || navigator.mediaDevices){
+    		navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+        	const track = stream.getVideoTracks()[0];
+		imageCapture = new ImageCapture(track);
+		video.srcObject = stream;
+        	video.play();
+    		});
+    	}
+        
+
+        function capture() {
+            console.log('capture')
+            imageCapture.takePhoto().then((blob) => {
+                websocket.send(blob)
+            })
+        }
+    </script>
+</body>
+
+</html>
